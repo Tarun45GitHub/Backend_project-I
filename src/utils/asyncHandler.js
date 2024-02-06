@@ -10,8 +10,8 @@
 // }}
 
 const asyncHandler=(fn)=>{
-    (req,res,nex)=>{
-        Promise.resolve(asyncHandler(req,res,nex)).catch((err)=>nex(err))
+     return (req,res,nex)=>{
+        Promise.resolve (asyncHandler(req,res,nex)).catch((err)=>nex(err))
     }
 }
 
