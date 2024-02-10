@@ -1,8 +1,8 @@
+// import { asyncHandler } from "../utils/asyncHandler.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-const registerUser= asyncHandler(async(res,req)=>{
-    res.status(200).json({
-        massage:"ok"
-    })
+const registerUser= asyncHandler(async(req,res)=>{
+    const {fullName,email}=req.body;
+    console.log(("email",email));
 })
 export {registerUser};
