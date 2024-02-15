@@ -7,7 +7,7 @@ import { apiResponse } from "../utils/apiResponse.js";
 
 const registerUser= asyncHandler(async(req,res)=>{
     //1.take data from frontend
-    const {username,email,fullname,password}=req.body()
+    const {username,email,fullname,password}=req.body;
 
     //2.validation 
     // if(fullname==="") throw new apiError(400,"fullname is required")
@@ -18,7 +18,7 @@ const registerUser= asyncHandler(async(req,res)=>{
     }
 
     //3.check user already exit
-   const exitedUser= User.findOne({
+   const exitedUser=await User.findOne({
         $or:[{ username },{ email }]
     })
     if(exitedUser) throw new apiError(404,"username Or email already exit");
@@ -33,10 +33,10 @@ const registerUser= asyncHandler(async(req,res)=>{
 
    //5.cteare objet of user -entry in db
    const user= await User.create({
-    fullname,avatar:avatar.url,coverImage:coverImage?.url||"",password,username:username.toLowerCase()
+    fullname,avatar:avatar.url,coverImage:coverImage?.url||"",password,username:username
    })
    //remove password and refreash token from response
-   const createduser=User.findById(user._id).select("-password -refreshToken");
+   const createduser= await User.findById(user._id).select("-password -refreshToken");
    if(!createduser) throw new apiError(404,"something went wrong ! please try again");
 
    //return response
