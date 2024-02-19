@@ -63,7 +63,7 @@ const userSchema= new Schema(
             }
         )
     }
-    userSchema.methods.AccessTokenGenarate=async function(){
+    userSchema.methods.RefreshTokenGenarate=async function(){
         return jwt.sign(
             {
                 _id:this._id,
