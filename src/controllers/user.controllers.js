@@ -7,8 +7,8 @@ import { apiResponse } from "../utils/apiResponse.js";
 const TokensGenarator=async(userId)=>{
     try {
         const user=await User.findById(userId)
-        const refreashToken=user.RefreshTokenGenarate();
-        const accessToken=user.AccessTokenGenarate();
+        const refreashToken= await user.RefreshTokenGenarate();
+        const accessToken= await user.AccessTokenGenarate();
 
         user.refreashToken=refreashToken;
         await user.save({validBeforeSave:false})
@@ -18,6 +18,7 @@ const TokensGenarator=async(userId)=>{
     } catch (error) {
         throw new apiError(500,"Something went wrong while token genarating");
     }
+    
 }
 
 const registerUser= asyncHandler(async(req,res)=>{
@@ -98,7 +99,10 @@ const loginUser=asyncHandler(async(req,res)=>{
     }
 
     //genarate acess token
-    const {accessToken,refreashToken}=await TokensGenarator(user._id)
+    const {refreashToken,accessToken}=await TokensGenarator(user._id)
+    
+
+    console.log(refreashToken);
 
     //send cookies
     const loggedUser= await User.findById(user._id).select("-password -refreshToken")
@@ -113,15 +117,17 @@ const loginUser=asyncHandler(async(req,res)=>{
     .json(new apiResponse(
         202,
         {
-            user:loggedUser,accessToken,refreashToken
+            user:loggedUser
         }
     ,"User logged in successfully"
+
     ))
 })
 
 const logoutUser=asyncHandler(async(req,res)=>{
     //find user and update
-   await User.findByIdAndUpdate(req.uesr._id,
+    console.log(req.user);
+   await User.findByIdAndUpdate(req.user._id,
         {
             refreashToken:undefined
         },
