@@ -3,17 +3,19 @@ import { apiError } from "../utils/apiError.js";
 import { User } from "../models/user.model.js";
 import  {UploadonCloudinary} from "../utils/cloudinary.js"
 import { apiResponse } from "../utils/apiResponse.js";
+import  jwt  from "jsonwebtoken";
 
 const TokensGenarator=async(userId)=>{
     try {
         const user=await User.findById(userId)
-        const refreashToken= await user.RefreshTokenGenarate();
+        const refreshToken= await user.RefreshTokenGenarate();
         const accessToken= await user.AccessTokenGenarate();
 
-        user.refreashToken=refreashToken;
-        await user.save({validBeforeSave:false})
+        user.refreshToken=refreshToken;
+        await user.save({validateBeforeSave:false})
 
-        return {refreashToken,accessToken}
+
+        return {refreshToken,accessToken}
 
     } catch (error) {
         throw new apiError(500,"Something went wrong while token genarating");
@@ -99,10 +101,10 @@ const loginUser=asyncHandler(async(req,res)=>{
     }
 
     //genarate acess token
-    const {refreashToken,accessToken}=await TokensGenarator(user._id)
+    const {refreshToken,accessToken}=await TokensGenarator(user._id)
     
 
-    console.log(refreashToken);
+    console.log(refreshToken);
 
     //send cookies
     const loggedUser= await User.findById(user._id).select("-password -refreshToken")
@@ -113,7 +115,7 @@ const loginUser=asyncHandler(async(req,res)=>{
     }
     return res.status(200)
     .cookie("accessToken",accessToken,options)
-    .cookie("refreshToken",refreashToken,options)
+    .cookie("refreshToken",refreshToken,options)
     .json(new apiResponse(
         202,
         {
@@ -147,4 +149,44 @@ const logoutUser=asyncHandler(async(req,res)=>{
         new apiResponse(200,{},"user loggedout ! ")
     )
 })
-export {registerUser,loginUser,logoutUser};
+
+const RefreashAccessToken=asyncHandler(async(req,res)=>{
+    try {
+        // console.log(req.cookies);
+        const RefreshToken=req.cookies?.refreshToken||req.header?.refreashToken;
+        if(!RefreshToken) {
+            throw new apiError(400,"unothrize request")
+        }
+        const decodedToken=jwt.verify(RefreshToken,process.env.REFRESH_TOKEN_SECRET);
+        const user= await User.findById(decodedToken?._id);
+        if(!user){
+            throw new apiError(401,"invalid refresh token")
+        }
+        // console.log(user.refreshToken);
+        if(user?.refreshToken!=RefreshToken) {
+            throw new apiError(401,"refresh token is expired or used")
+        }
+        const {newAccessToken,newRefeshToken}= await TokensGenarator(user._id)
+        const options={
+            httpOnly:true,
+            secure:true
+        }
+        return res.status(200)
+        .cookie("refreshToken",newRefeshToken,options)
+        .cookie("accessToken",newAccessToken,options)
+        .json(
+            new apiResponse(
+                200,
+                {
+                    newAccessToken,newRefeshToken
+                },
+                "token refresh succesfully"
+            )
+        )
+    } catch (error) {
+        throw new apiError(404,error?.message||"something went wrong while refresh access token")
+        
+    }
+
+})
+export {registerUser,loginUser,logoutUser,RefreashAccessToken};

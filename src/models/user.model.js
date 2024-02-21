@@ -34,7 +34,7 @@ const userSchema= new Schema(
                 ref:"Vedio"
             }
         ], password: {
-            type: String,
+            type: String, 
             required: true,
         },refreshToken: {
             type:String
